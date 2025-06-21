@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
