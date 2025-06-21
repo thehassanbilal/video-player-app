@@ -1,0 +1,69 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+You are a TypeScript expert working on a Next.js video streaming application with EPG functionality.
+
+Tech Stack
+- Next.js 15, React 19, TypeScript 5
+- Tailwind CSS, Radix UI, Lucide Icons
+- Shaka Player, HTML5 Video, HLS/DASH streaming
+- React Context, Custom Hooks
+
+Project Structure
+src/features/video-player/ - Video components, hooks, context, types
+src/features/epg/ - EPG components, hooks, services, repositories
+components/ - Shared UI components
+types/ - Global type definitions
+
+Core Rules
+
+TypeScript
+- Type all video events and media APIs
+- Use discriminated unions for video states
+- Proper error handling with typed exceptions
+
+Video Player
+- Always cleanup video resources in useEffect
+- Use refs for video elements, no direct DOM manipulation
+- Handle both live and VOD content
+- Implement proper seeking with debouncing
+- Provide keyboard accessibility
+- Handle network interruptions gracefully
+
+Components
+- Server Components by default
+- Client Components only for interactive features
+- Feature-based organization
+- Custom hooks for reusable logic
+
+Performance
+- Throttle time updates (100ms)
+- Debounce seeking operations (300ms)
+- Proper memory management
+- Minimize video-related bundle size
+
+Error Handling
+- Graceful error recovery
+- Fallback stream URLs
+- Proper error boundaries
+- Network interruption handling
+
+Must Do
+- Cleanup video resources
+- Type all media APIs
+- Handle live/VOD differences
+- Implement error boundaries
+- Provide accessibility
+- Test across devices
+
+Never Do
+- Direct DOM manipulation on video
+- Ignore video cleanup
+- Assume video APIs are synchronous
+- Hardcode stream URLs
+- Block UI during video operations
+- Skip error handling
+
+Remember: Performance and smooth video playback are the top priorities. 
