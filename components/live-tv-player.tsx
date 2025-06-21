@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +12,53 @@ import { ProgramSchedule } from "./program-schedule"
 import { VideoSelector } from "./video-selector"
 import type { Event, Channel } from "../types/epg"
 
+// Shaka Player loader function (SSR safe)
+const loadShakaPlayer = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      reject(new Error("Window not available"))
+      return
+    }
+
+    if (window.shaka) {
+      resolve(window.shaka)
+      return
+    }
+
+    // Try to load from local public directory first
+    const script = document.createElement("script")
+    script.src = "/shaka-player.compiled.js"
+    script.async = true
+
+    script.onload = () => {
+      console.log("Shaka Player loaded from local installation")
+      resolve(window.shaka)
+    }
+
+    script.onerror = () => {
+      console.log("Local Shaka Player failed, trying CDN...")
+      // Fallback to CDN
+      const cdnScript = document.createElement("script")
+      cdnScript.src = "https://ajax.googleapis.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.js"
+      cdnScript.async = true
+
+      cdnScript.onload = () => {
+        console.log("Shaka Player loaded from CDN")
+        resolve(window.shaka)
+      }
+
+      cdnScript.onerror = () => {
+        reject(new Error("Failed to load Shaka Player from both local and CDN"))
+      }
+
+      document.head.appendChild(cdnScript)
+    }
+
+    document.head.appendChild(script)
+  })
+}
+
+// Declare global types for Shaka Player
 declare global {
   interface Window {
     shaka: any
@@ -200,14 +248,12 @@ export default function LiveTVPlayer() {
           // For streaming formats (HLS, DASH), use Shaka Player
           console.log(`Using Shaka Player for streaming: ${currentEvent.title}`)
 
-          // Load Shaka Player from CDN
-          if (!window.shaka) {
-            const script = document.createElement("script")
-            script.src = "https://ajax.googleapis.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.js"
-            script.onload = () => initShakaPlayer()
-            document.head.appendChild(script)
-          } else {
+          try {
+            await loadShakaPlayer()
             initShakaPlayer()
+          } catch (error) {
+            console.error("Failed to load Shaka Player:", error)
+            setError("Failed to load video player")
           }
         }
       } catch (err: any) {
@@ -412,7 +458,7 @@ export default function LiveTVPlayer() {
           })
         }
         timeUpdateThrottle = null
-      }, 100)
+      }, 50) // Reduced from 100ms to 50ms for smoother progress updates
     }
 
     video.addEventListener("timeupdate", throttledTimeUpdate)
@@ -523,21 +569,23 @@ export default function LiveTVPlayer() {
     const seekTime = value[0]
     const threshold = 2 // Increased threshold to 2 seconds for easier detection
 
+    // IMMEDIATE VISUAL FEEDBACK - Update UI instantly
+    setCurrentTime(seekTime)
+
     // Clear any existing seek timeout
     if (seekTimeoutRef.current) {
       clearTimeout(seekTimeoutRef.current)
     }
 
-    // Set seeking flag to prevent time updates during seek
+    // Set seeking flag to prevent conflicting time updates from video events
     setIsSeeking(true)
 
-    // Debounce the seek operation
+    // Debounce only the actual video seeking operation (reduced to 10ms for faster response)
     seekTimeoutRef.current = setTimeout(() => {
       if (isLive) {
         // For live videos, allow seeking within the seekable range
         if (seekTime >= seekableRange.start && seekTime <= seekableRange.end) {
           videoRef.current!.currentTime = seekTime
-          setCurrentTime(seekTime)
         }
       } else {
         // For on-demand videos, check for automatic switching
@@ -590,12 +638,11 @@ export default function LiveTVPlayer() {
 
         // Normal seeking within the current video
         videoRef.current!.currentTime = seekTime
-        setCurrentTime(seekTime)
       }
 
-      // Reset seeking flag after a short delay
-      setTimeout(() => setIsSeeking(false), 100)
-    }, 50) // 50ms debounce delay
+      // Reset seeking flag with minimal delay
+      setTimeout(() => setIsSeeking(false), 50)
+    }, 10) // Reduced from 50ms to 10ms for much faster response
   }
 
   const handleVolumeChange = (value: number[]) => {
