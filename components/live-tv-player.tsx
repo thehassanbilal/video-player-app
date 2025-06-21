@@ -217,6 +217,10 @@ export default function LiveTVPlayer() {
           videoRef.current.src = streamUrl
           videoRef.current.load()
 
+          // Restore mute state and volume after loading
+          videoRef.current.volume = isMuted ? 0 : volume
+          videoRef.current.muted = isMuted
+
           // Auto-play based on status
           if (currentEvent.status === "live") {
             try {
@@ -301,8 +305,10 @@ export default function LiveTVPlayer() {
               .then(() => {
                 console.log("Fallback stream loaded successfully")
                 setError(null)
-                // Auto-play the fallback
+                // Restore mute state and volume after fallback loading
                 if (videoRef.current) {
+                  videoRef.current.volume = isMuted ? 0 : volume
+                  videoRef.current.muted = isMuted
                   videoRef.current.play().catch(console.warn)
                 }
               })
@@ -333,6 +339,12 @@ export default function LiveTVPlayer() {
           await player.load(streamUrl)
           setError(null)
           console.log(`Successfully loaded stream for: ${currentEvent.title}`)
+
+          // Restore mute state and volume after loading
+          if (videoRef.current) {
+            videoRef.current.volume = isMuted ? 0 : volume
+            videoRef.current.muted = isMuted
+          }
         } catch (primaryError: any) {
           console.warn(`Primary stream failed for ${currentEvent.title}:`, primaryError.message)
 
@@ -342,6 +354,12 @@ export default function LiveTVPlayer() {
             await player.load(FALLBACK_STREAM_URL)
             setError(null)
             console.log(`Successfully loaded fallback stream for: ${currentEvent.title}`)
+
+            // Restore mute state and volume after fallback loading
+            if (videoRef.current) {
+              videoRef.current.volume = isMuted ? 0 : volume
+              videoRef.current.muted = isMuted
+            }
           } catch (fallbackError: any) {
             console.error(`Fallback stream also failed:`, fallbackError.message)
             setError(`Failed to load any stream: ${fallbackError.message}`)
@@ -361,6 +379,10 @@ export default function LiveTVPlayer() {
           // For ended content, load and auto-play immediately
           videoRef.current.load()
           console.log(`Ended content loaded and ready: ${currentEvent.title}`)
+
+          // Restore mute state and volume after loading
+          videoRef.current.volume = isMuted ? 0 : volume
+          videoRef.current.muted = isMuted
 
           // Wait for video to be ready then play
           const playWhenReady = () => {
@@ -421,6 +443,10 @@ export default function LiveTVPlayer() {
     const handlePause = () => setIsPlaying(false)
     const handleLoadedData = () => {
       console.log(`Video loaded: ${currentEvent?.title}, Duration: ${video.duration}`)
+
+      // Ensure mute state is preserved when video data loads
+      video.volume = isMuted ? 0 : volume
+      video.muted = isMuted
     }
     const handleCanPlay = () => {
       console.log(`Video can play: ${currentEvent?.title}`)
