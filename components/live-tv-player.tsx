@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
@@ -716,9 +717,11 @@ export default function LiveTVPlayer() {
           >
             <div className="flex items-center gap-3">
               {channel?.images.find((img) => img.type === "logo-png") && (
-                <img
+                <Image
                   src={channel.images.find((img) => img.type === "logo-png")?.url || "/placeholder.svg"}
                   alt={channel.title}
+                  width={32}
+                  height={32}
                   className="h-8 w-auto"
                 />
               )}

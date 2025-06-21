@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -81,9 +82,8 @@ export function ProgramSchedule({ events, currentEvent, onEventSelect }: Program
           {filteredEvents.map((event) => (
             <div
               key={event.id}
-              className={`p-4 rounded-lg border transition-all cursor-pointer hover:shadow-md ${
-                currentEvent?.id === event.id ? "border-blue-500 bg-blue-50" : "border-gray-200"
-              }`}
+              className={`p-4 rounded-lg border transition-all cursor-pointer hover:shadow-md ${currentEvent?.id === event.id ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                }`}
               onClick={() => onEventSelect(event)}
             >
               <div className="flex items-start justify-between gap-3">
@@ -120,9 +120,11 @@ export function ProgramSchedule({ events, currentEvent, onEventSelect }: Program
                 </div>
 
                 {event.images.length > 0 && (
-                  <img
+                  <Image
                     src={event.images[0].url || "/placeholder.svg"}
                     alt={event.title}
+                    width={64}
+                    height={48}
                     className="w-16 h-12 object-cover rounded flex-shrink-0"
                   />
                 )}

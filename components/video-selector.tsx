@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
+import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Play, Tv } from "lucide-react"
 import type { Event } from "../types/epg"
@@ -161,7 +162,13 @@ export function VideoSelector({ events, currentEvent, onSelectVideo, onClose, vi
                   }`}
               >
                 <div className="w-full h-full relative">
-                  <img src={imageUrl} alt={event.title} className="w-full h-full object-cover" />
+                  <Image
+                    src={imageUrl}
+                    alt={event.title}
+                    width={320}
+                    height={224}
+                    className="w-full h-full object-cover"
+                  />
 
                   {/* Gradient overlay for text */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
