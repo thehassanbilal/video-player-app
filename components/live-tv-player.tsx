@@ -77,7 +77,6 @@ export default function LiveTVPlayer() {
   const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showControls, setShowControls] = useState(true)
   const [showVideoSelector, setShowVideoSelector] = useState(false)
@@ -104,7 +103,6 @@ export default function LiveTVPlayer() {
 
     const loadEPGData = async () => {
       try {
-        setIsLoading(true)
         const response = await EPGService.getChannelPrograms()
 
         if (response.data && response.data.length > 0) {
@@ -128,8 +126,6 @@ export default function LiveTVPlayer() {
         }
       } catch (err: any) {
         setError(`Failed to load program data: ${err.message}`)
-      } finally {
-        setIsLoading(false)
       }
     }
 
@@ -506,7 +502,7 @@ export default function LiveTVPlayer() {
       video.removeEventListener("pause", handlePause)
       video.removeEventListener("ended", handleEnded)
     }
-  }, [isLive, currentEvent, events, isSwitchingVideo, isSeeking])
+  }, [isLive, currentEvent, events, isSwitchingVideo, isSeeking, isMuted, volume])
 
   // Keyboard event listener for up arrow key
   useEffect(() => {
@@ -626,9 +622,28 @@ export default function LiveTVPlayer() {
           if (previousEvent && previousEvent.status !== "upcoming") {
             console.log(`Auto-switching to previous video: ${previousEvent.title}`)
             setIsSwitchingVideo(true)
+
+            // Smooth transition with fade effect
+            if (videoRef.current) {
+              videoRef.current.style.transition = 'opacity 0.3s ease-in-out'
+              videoRef.current.style.opacity = '0.5'
+            }
+
             setCurrentEvent(previousEvent)
             setIsLive(previousEvent.status === "live")
-            setTimeout(() => setIsSwitchingVideo(false), 1000)
+
+            setTimeout(() => {
+              setIsSwitchingVideo(false)
+              if (videoRef.current) {
+                videoRef.current.style.opacity = '1'
+                // Reset transition after animation
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.style.transition = ''
+                  }
+                }, 300)
+              }
+            }, 500) // Reduced from 1000ms to 500ms for faster transition
             setIsSeeking(false)
             return
           } else {
@@ -644,16 +659,30 @@ export default function LiveTVPlayer() {
           if (nextEvent && nextEvent.status !== "upcoming") {
             console.log(`Auto-switching to next video: ${nextEvent.title}`)
             setIsSwitchingVideo(true)
+
+            // Smooth transition with fade effect
+            if (videoRef.current) {
+              videoRef.current.style.transition = 'opacity 0.3s ease-in-out'
+              videoRef.current.style.opacity = '0.5'
+            }
+
             setCurrentEvent(nextEvent)
             setIsLive(nextEvent.status === "live")
 
             // The new video will start from the beginning automatically
             setTimeout(() => {
               setIsSwitchingVideo(false)
-              if (videoRef.current && !isLive) {
+              if (videoRef.current) {
                 videoRef.current.currentTime = 0
+                videoRef.current.style.opacity = '1'
+                // Reset transition after animation
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.style.transition = ''
+                  }
+                }, 300)
               }
-            }, 1000)
+            }, 500) // Reduced from 1000ms to 500ms for faster transition
             setIsSeeking(false)
             return
           } else {
@@ -722,19 +751,6 @@ export default function LiveTVPlayer() {
     }
   }, [])
 
-  // Don't render until client is ready to prevent hydration mismatches
-  if (!isClient) {
-    return (
-      <div className="w-full max-w-7xl mx-auto space-y-6">
-        <div className="bg-black rounded-lg overflow-hidden relative">
-          <div className="relative aspect-video bg-black flex items-center justify-center">
-            <div className="text-white text-lg">Loading...</div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Video Player */}
@@ -753,12 +769,6 @@ export default function LiveTVPlayer() {
             onClick={togglePlay}
           />
 
-          {/* Loading Overlay */}
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="text-white text-lg">Loading channel...</div>
-            </div>
-          )}
 
           {/* Error Overlay */}
           {error && (
